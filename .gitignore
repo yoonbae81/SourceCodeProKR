@@ -1,8 +1,31 @@
-# 파이썬 관련 파일
-.venv/
+# Python
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.pyc
 
-# 생성된 파일
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Environment Variables
+.env
+
+# IDE
+.vscode/
+.idea/
+.claude
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build Artifacts
 assets/
 out/
 *.zip

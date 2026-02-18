@@ -1,121 +1,121 @@
-# JetBrainsMonoHangul
-<div align="center">
-    <img src="https://repository-images.githubusercontent.com/500120796/115b6aa3-1fc4-445d-914d-d35184754fa5">
-</div>
+# Source Code Pro KR
 
-[JetBrains Mono](https://github.com/JetBrains/JetBrainsMono)에 [D2Coding](https://github.com/naver/d2codingfont)의 한글 영역 (U+3131-U+318E, U+AC00-U+D7A3)을 덧씌운 뒤 폭을 조정한 폰트입니다. [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts)도 릴리즈에 포함되어 있습니다.
+[Source Code Pro](https://github.com/adobe-fonts/source-code-pro)에 [D2Coding](https://github.com/naver/d2codingfont)의 한글 영역 (U+3131-U+318E, U+AC00-U+D7A3)을 덧씌운 폰트입니다.
 
-본래 이름을 JetBrains D2정도로 지으려고 했으나 D2Coding이 RFN 라이선스를 사용하는 바람에 JetBrains Mono Hangul로 이름을 지었습니다.
+**Forked from [Jhyub/JetBrainsMonoHangul](https://github.com/Jhyub/JetBrainsMonoHangul)**
 
-## Quick Start
-``` shell
-$ sudo apt install python3-fontforge
+## Features
 
-$ git clone <repository>
-$ cd <repository>
+- Adobe Source Code Pro 기반의 코딩 폰트
+- D2Coding 한글 glyphs 통합
+- 한글 좌우 여백 조정 가능
+- 다양한 폰트 웨이트 지원 (Regular, Medium, Bold 등)
+- Apple FontBook 호환 name table 구조
 
-$ python build.py all
+## Requirements
+
+- macOS with Homebrew
+- Python 3.12+
+- FontForge (installed via Homebrew)
+
+## Installation
+
+```bash
+# Clone repository
+git clone https://github.com/yuneal/SourceCodeProKR
+cd SourceCodeProKR
+
+# Run setup script (installs FontForge, creates venv, installs Python deps)
+./scripts/setup-env.sh
 ```
 
-fontforge는 pip에서 제공하지 않으므로 외부 패키지를 설치해야 합니다.  
-wget은 pip에서 제공하나 상황에 따라서 파이썬 가상 환경을 설정해야 합니다.
+## Usage
 
-## Config
-```
-download_path
+### Build Fonts
 
-폰트 빌드에 필요한 파일을 다운로드할 위치.
+```bash
+# Build fonts (downloads fonts and builds)
+./scripts/build.sh all
 
-기본값: 'assets'
-```
-
-```
-out_path
-
-빌드한 폰드를 내보낼 위치.
-
-기본값: 'out'
+# Or if fonts are already downloaded, just build
+./scripts/build.sh build
 ```
 
-```
-jetbrains_mono_version
+### Install Fonts (Linux)
 
-사용할 JetBrains Mono 폰트의 버전.
-
-기본값: '2.304'
-```
-
-```
-d2_coding_version
-
-사용할 D2Coding 폰트의 버전.
-
-기본값: '1.3.2'
+```bash
+# 폰트 디렉토리 생성 (이미 있으면 무시됨)
+mkdir -p ~/.local/share/fonts/SourceCodeProKR
+# ttf 파일들을 해당 디렉토리로 복사
+cp out/*.ttf ~/.local/share/fonts/SourceCodeProKR/
+# 폰트 캐시 갱신
+fc-cache -fv
 ```
 
-```
-d2_coding_date
+### Clean Build Artifacts
 
-사용할 D2Coding 폰트의 릴리즈 날짜.
-
-기본값: '20180524'
+```bash
+./scripts/clean.sh
 ```
 
-```
-jetbrains_mono_url
+## Configuration
 
-JetBrains Mono를 다운로드할 URL.
+Create a `.env` file from the example to customize font variants and spacing:
 
-기본값: jetbrains_mono_version에 의해 자동 설정됨.
-```
-
-```
-d2_coding_url
-
-D2Coding을 다운로드할 URL.
-
-기본값: d2_coding_version, d2_coding_date에 의해 자동 설정됨.
+```bash
+cp .env.example .env
 ```
 
-```
-jetbrains_mono_name
+Edit the `.env` file:
 
-JetBrains Mono를 다운로드할 때 사용할 이름.
+```env
+# Hangul glyph bearing adjustment (spacing)
+# The value is divided by 2 for left and right bearings.
+HANGUL_BEARING_ADJUSTMENT=-60
 
-기본값: 'JetBrains_Mono.zip'
-```
-
-```
-d2_coding_name
-
-D2Coding을 다운로드할 때 사용할 이름.
-
-기본값: 'D2_Coding.zip'
+# Font variants to include in build (comma-separated)
+FONT_VARIANTS=Regular,Bold
 ```
 
-```
-d2_coding_width
+### Bearing Adjustment Values
 
-사용할 D2Coding의 글자 폭.
+| Value | Effect                                |
+| ----- | ------------------------------------- |
+| -80   | Remove 40px from each side (narrower) |
+| -60   | Remove 30px from each side            |
+| -40   | Remove 20px from each side            |
+| 0     | No change to spacing                  |
+| 100   | Add 50px to each side                 |
+| 200   | Add 100px to each side (original)     |
 
-기본값: 1000
-```
-
-```
-jetbrains_mono_width
-
-사용할 JetBrains Mono의 글자 폭.
-
-기본값: 1200
-```
+## Project Structure
 
 ```
-use_system_wget
-
-외부 wget 사용 여부.
-
-기본값: False
+SourceCodeProKR/
+├── src/                    # Source code
+│   ├── main.py            # Build script entry point
+│   ├── config.py          # Configuration
+│   └── hangulify.py       # Font building logic
+├── scripts/                # Setup and build scripts
+│   ├── setup-env.sh       # Environment setup
+│   ├── build.sh           # Build execution
+│   └── clean.sh           # Clean artifacts
+├── tests/                  # Test suite
+├── assets/                 # Downloaded fonts (gitignored)
+├── out/                    # Built fonts (gitignored)
+└── .venv/                  # Virtual environment (gitignored)
 ```
 
 ## License
-OFL 하에 배포됩니다. LICENSE 파일을 참조해주세요.
+
+OFL-1.1 (SIL Open Font License 1.1)
+
+Source Code Pro is licensed under the SIL Open Font License.
+D2Coding is licensed under the SIL Open Font License.
+
+---
+
+## Acknowledgments
+
+- [Source Code Pro](https://github.com/adobe-fonts/source-code-pro) by Adobe
+- [D2Coding](https://github.com/naver/d2codingfont) by Naver
