@@ -115,6 +115,21 @@ def build_font():
         with suppress_stderr():
             scp = fontforge.open(scp_file_path)
 
+        # Debug: Check for nested table access
+        if base_name == 'Regular':
+            print("[DEBUG] Checking for nested table access...")
+            # Check if we can access tables via nested attributes
+            for table_name in ['OS2', 'OS/2', 'post', 'POST', 'head', 'cvt']:
+                if hasattr(scp, table_name):
+                    print(f"  - scp.{table_name} exists: {getattr(scp, table_name)}")
+            # Check for lowercase versions
+            for table_name in ['os2', 'post']:
+                if hasattr(scp, table_name):
+                    table = getattr(scp, table_name)
+                    print(f"  - scp.{table_name} exists: {type(table)}")
+                    if hasattr(table, '__dict__'):
+                        print(f"    Attributes: {sorted(table.__dict__.keys())}")
+
         scp.selection.select(("unicode", "ranges"), 0x3131, 0x318E) \
             .select(("unicode", "ranges", "more"), 0xAC00, 0xD7A3)
         scp.paste()
@@ -182,18 +197,33 @@ def build_font():
         # Update full name with corrected subfamily
         full_name = f"{family_name} {subfamily_name}"
         scp.fullname = full_name
-        scp.subfamilyname = subfamily_name
+        try:
+            scp.subfamilyname = subfamily_name
+        except AttributeError:
+            pass  # Not all FontForge versions have this attribute
 
         # For Linux/Windows monospaced detection and correct cell width
-        # Try both common attribute names for fixed pitch flag
-        try:
-            scp.is_fixed_pitch = True
-        except AttributeError:
-            try:
-                # Some versions use postscript_is_fixed_pitch
-                scp.postscript_is_fixed_pitch = True
-            except AttributeError:
-                pass
+        # Try multiple possible attribute names for fixed pitch flag
+        fixed_pitch_set = False
+        fixed_pitch_attrs = [
+            'is_fixed_pitch',
+            'postscript_is_fixed_pitch',
+            'postscript_isfixedpitch',
+            'postscript_fixed_pitch',
+        ]
+
+        for attr in fixed_pitch_attrs:
+            if not fixed_pitch_set:
+                try:
+                    setattr(scp, attr, True)
+                    fixed_pitch_set = True
+                    print(f"[DEBUG] {attr} set to True")
+                    break
+                except AttributeError:
+                    continue
+
+        if not fixed_pitch_set:
+            print("[WARN] Could not set fixed pitch flag (tried all attributes)")
         
         # OS/2 table PANOSE: 4th digit (index 3) is 9 for monospaced
         if scp.os2_panose:
@@ -201,19 +231,43 @@ def build_font():
             if len(panose) > 3:
                 panose[3] = 9
                 scp.os2_panose = tuple(panose)
+                print(f"[DEBUG] PANOSE set to: {scp.os2_panose}")
+        else:
+            print("[WARN] os2_panose not available")
         
         # OS/2 table xAvgCharWidth: force to Latin width (600)
-        # This prevents some systems (especially on Linux) from using the Hangul width 
+        # This prevents some systems (especially on Linux) from using the Hangul width
         # as the default cell width for all characters.
-        try:
-            # The correct FontForge attribute name is os2_xavgcharwidth
-            scp.os2_xavgcharwidth = sourcecodepro_latin_width
-        except AttributeError:
+        xavg_set = False
+        xavg_attrs = [
+            'os2_xavgcharwidth',
+            'os2_avgcharwidth',
+            'os2_x_avg_char_width',
+            'os2xAvgCharWidth',
+            'os2_avg_char_width',
+        ]
+
+        for attr in xavg_attrs:
+            if not xavg_set:
+                try:
+                    setattr(scp, attr, sourcecodepro_latin_width)
+                    xavg_set = True
+                    print(f"[DEBUG] {attr} set to: {sourcecodepro_latin_width}")
+                    break
+                except AttributeError:
+                    continue
+
+        if not xavg_set:
+            print("[WARN] Could not set OS/2 average character width (tried all attributes)")
+
+        # Verify the setting was applied
+        for attr in xavg_attrs:
             try:
-                # Fallback to alternate name if exists
-                scp.os2_avgcharwidth = sourcecodepro_latin_width
+                actual_xavg = getattr(scp, attr)
+                print(f"[DEBUG] Verified {attr}: {actual_xavg}")
+                break
             except AttributeError:
-                print("[WARN] Could not set OS/2 average character width")
+                continue
 
         # Clean up and rebuild sfnt_names
         # 0x409: English (US)
