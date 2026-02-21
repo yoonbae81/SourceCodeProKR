@@ -25,7 +25,14 @@ mkdir -p ~/.local/share/fonts
 # Copy font files
 cp "$OUT_DIR"/*.ttf ~/.local/share/fonts/
 
-# Refresh font cache
 fc-cache -fv
+
+if command -v kgx &> /dev/null && command -v gsettings &> /dev/null; then
+    if gsettings list-keys org.gnome.Console &> /dev/null; then
+        gsettings set org.gnome.Console use-system-font false
+        gsettings set org.gnome.Console custom-font 'Source Code Pro KR 12'
+        echo "kgx font set to Source Code Pro KR"
+    fi
+fi
 
 echo "Fonts installed successfully!"
